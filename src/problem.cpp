@@ -156,12 +156,14 @@ void Problem::initialize(moveit::core::RobotModelConstPtr robot_model, const mov
 
         if(auto* g = dynamic_cast<const PositionGoal*>(goal_info.goal))
         {
+            ROS_WARN("Got position goal");
             goal_info.goal_type = GoalType::Position;
             goal_info.frame.pos = g->getPosition();
         }
 
         if(auto* g = dynamic_cast<const OrientationGoal*>(goal_info.goal))
         {
+            ROS_WARN("Got orientation goal");
             goal_info.goal_type = GoalType::Orientation;
             goal_info.frame.rot = g->getOrientation();
         }
@@ -174,8 +176,8 @@ void Problem::initialize(moveit::core::RobotModelConstPtr robot_model, const mov
         }
 
         goal_info.goal_context.joint_model_group_ = joint_model_group;
-        goal_info.goal_context.initial_guess_ = initial_guess;
 
+        goal_info.goal_context.initial_guess_ = initial_guess;
         if(goal_info.goal_context.goal_secondary_)
             secondary_goals.push_back(goal_info);
         else
@@ -211,8 +213,8 @@ void Problem::initialize(moveit::core::RobotModelConstPtr robot_model, const mov
         {
             for(size_t i = 0; i < active_variables.size(); i++)
             {
-                auto ivar = active_variables[i];
-                minimal_displacement_factors[i] = modelInfo.getMaxVelocityRcp(ivar) / s;
+                //auto ivar = active_variables[i];
+                //minimal_displacement_factors[i] = modelInfo.getMaxVelocityRcp(ivar) / s;
             }
         }
         else
@@ -222,7 +224,7 @@ void Problem::initialize(moveit::core::RobotModelConstPtr robot_model, const mov
         }
     }
 
-    initialize2();
+    //initialize2();
 }
 
 void Problem::initialize2()
@@ -249,8 +251,13 @@ double Problem::computeGoalFitness(GoalInfo& goal_info, const Frame* tip_frames,
 double Problem::computeGoalFitness(std::vector<GoalInfo>& goals, const Frame* tip_frames, const double* active_variable_positions)
 {
     double sum = 0.0;
-    for(auto& goal : goals)
+    for(auto& goal : goals){
         sum += computeGoalFitness(goal, tip_frames, active_variable_positions);
+    }
+    if (sum == DBL_MAX)
+    {
+        ROS_WARN("SOLUTION IS DBL_MAX");
+    }
     return sum;
 }
 
@@ -328,7 +335,9 @@ bool Problem::checkSolutionActiveVariables(const std::vector<Frame>& tip_frames,
             dmax = std::fmin(dmax, dpos);
             dmax = std::fmin(dmax, dtwist);
             double d = computeGoalFitness(goal, tip_frames.data(), active_variable_positions);
-            if(!(d < dmax * dmax)) return false;
+            if(!(d < dmax * dmax)){
+                return false;
+            }
         }
         }
     }

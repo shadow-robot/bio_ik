@@ -159,15 +159,23 @@ private:
         // run solver iterations until solution found or timeout
         for(size_t iteration = 0; (ros::WallTime::now().toSec() < timeout && finished == 0) || (iteration == 0 && i == 0); iteration++)
         {
-            if(finished) break;
-
+            ROS_WARN("IN SOLVING LOOP");
+            if(finished)
+            {
+                ROS_WARN("FINISHED SO STOPPING HERE");
+                break;
+            }
             // run solver for a few steps
             solvers[i]->step();
             iteration_count++;
             for(int it2 = 1; it2 < 4; it2++)
                 if(ros::WallTime::now().toSec() < timeout && finished == 0) solvers[i]->step();
 
-            if(finished) break;
+            if(finished) 
+            {
+                ROS_WARN("FINISHED SO STOOPPING HERE 2");
+                break;
+            }
 
             // get solution and check stop criterion
             auto& result = solver_temps[i];
@@ -179,11 +187,11 @@ private:
             solver_success[i] = success;
             solver_solutions[i] = result;
             solver_fitness[i] = solvers[i]->computeFitness(result, fk.getTipFrames());
-
+            std::cout<<"SOLVER FITNESS before checking with solve: "<<solver_fitness[i]<<std::endl;
             if(success) break;
         }
 
-        finished = 1;
+        finished = 1; // Just changed, it was ONE
 
         for(auto& s : solvers)
             s->canceled = true;
@@ -206,8 +214,10 @@ public:
             s = problem.initial_guess;
         for(auto& s : solver_success)
             s = 0;
-        for(auto& f : solver_fitness)
+        for(auto& f : solver_fitness){
             f = DBL_MAX;
+            std::cout<<"SOLVER FITNESS INITIALIZED: "<<f<<std::endl;
+        }
         for(auto& s : solvers)
             s->canceled = false;
 
@@ -252,6 +262,7 @@ public:
         {
             for(size_t i = 0; i < thread_count; i++)
             {
+                std::cout<<"SOLVER FITNESS IN COMPUTATION LATER: "<<solver_fitness[i]<<std::endl;
                 if(solver_fitness[i] < best_fitness)
                 {
                     best_fitness = solver_fitness[i];
@@ -259,13 +270,15 @@ public:
                 }
             }
         }
-
+        
+        std::cout<<"BEST FITNESS: "<<best_fitness<<std::endl;
         if(enable_counter)
         {
             LOG("iterations", iteration_count);
         }
-
+        
         result = solver_solutions[best_index];
+
         success = solver_success[best_index];
     }
 

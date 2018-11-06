@@ -92,7 +92,9 @@ public:
     }
     inline const tf::Vector3& getPosition() const { return position_; }
     inline void setPosition(const tf::Vector3& position) { position_ = position; }
-    virtual double evaluate(const GoalContext& context) const { return context.getLinkFrame().getPosition().distance2(getPosition()); }
+    virtual double evaluate(const GoalContext& context) const {
+        return context.getLinkFrame().getPosition().distance2(getPosition()); 
+    }
 };
 
 class OrientationGoal : public LinkGoalBase

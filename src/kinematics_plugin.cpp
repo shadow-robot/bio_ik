@@ -192,7 +192,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
     // LOG_VAR(robot_description);
     // LOG_VAR(group_name);
-
     LOG("bio ik init", ros::this_node::getName());
 
     /*rdf_loader::RDFLoader rdf_loader(robot_description_);
@@ -249,7 +248,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     lookupParam("threads", ikparams.thread_count, 0);
 
     // initialize parameters for Problem
-    lookupParam("dpos", ikparams.dpos, DBL_MAX);
+    lookupParam("dpos", ikparams.dpos, 0.5 );
     lookupParam("drot", ikparams.drot, DBL_MAX);
     lookupParam("dtwist", ikparams.dtwist, 1e-5);
 
@@ -260,7 +259,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     lookupParam("linear_fitness", ikparams.linear_fitness, false);
 
     temp_state.reset(new moveit::core::RobotState(robot_model));
-
     ik.reset(new IKParallel(ikparams));
 
     {
@@ -440,13 +438,14 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
     // LOG(typeid(options).name());
     // LOG(((OptMod*)&options)->test);
-
     // get variable default positions / context state
     state.resize(robot_model->getVariableCount());
     robot_model->getVariableDefaultPositions(state);
     if (context_state)
       for (size_t i = 0; i < robot_model->getVariableCount(); i++)
+      {
         state[i] = context_state->getVariablePositions()[i];
+      }
 
     // overwrite used variables with seed state
     solution = ik_seed_state;
@@ -457,8 +456,10 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
         if (!joint_model)
           continue;
         for (size_t vi = 0; vi < joint_model->getVariableCount(); vi++)
+        {
           state.at(joint_model->getFirstVariableIndex() + vi) =
               solution.at(i++);
+        }
       }
     }
 
@@ -480,7 +481,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     }
 
     // init ik
-
     problem.timeout = t0 + timeout;
     problem.initial_guess = state;
 
@@ -562,6 +562,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
           robot_model->getMimicJointModels().empty()) {
         auto r = problem.initial_guess[ivar];
         auto lo = robot_info.getMin(ivar);
+        //double lo = -0.5; // Just changed, the problem seems to be the limit = 0 and the joint sometimes goes below that
         auto hi = robot_info.getMax(ivar);
 
         // move close to initial guess
@@ -577,9 +578,19 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
         // wrap at joint limits
         if (v > hi)
+        {
+          std::cout<<"V BIG: "<<v<<std::endl;
+          ROS_WARN("SOLUTION BIGGER THAN HIGHEST");
           v -= std::ceil(std::max(0.0, v - hi) / (2 * M_PI)) * (2 * M_PI);
+          std::cout<<"V HIGH: "<<v<<std::endl;
+        }
         if (v < lo)
+        {
+          ROS_WARN("SOLUTION SMALLER THAN LOWEST");
+          std::cout<<"V LOWEST: "<<v<<std::endl;
           v += std::ceil(std::max(0.0, lo - v) / (2 * M_PI)) * (2 * M_PI);
+          std::cout<<"V LOW: "<<v<<std::endl;
+        }
 
         // clamp at edges
         if (v < lo)
