@@ -110,6 +110,7 @@ template <int memetic> struct IKEvolution2 : IKBase
 
     void initialize(const Problem& problem)
     {
+        ROS_WARN("Using ik evolution 2");
         BLOCKPROFILER("initialization");
 
         IKBase::initialize(problem);
@@ -129,6 +130,7 @@ template <int memetic> struct IKEvolution2 : IKBase
         initial_guess = problem.initial_guess;
         solution = initial_guess;
         solution_fitness = computeFitness(solution);
+        // should be 0
 
         // init temporary buffer with positions of inactive joints
         temp_joint_variables = initial_guess;

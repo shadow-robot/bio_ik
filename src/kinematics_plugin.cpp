@@ -233,7 +233,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     // for(auto& n : link_names) LOG("link", n);
 
     // bool enable_profiler;
-    lookupParam("profiler", enable_profiler, false);
+    lookupParam("profiler", enable_profiler, true);
     // if(enable_profiler) Profiler::start();
 
     robot_info = RobotInfo(robot_model);
@@ -248,7 +248,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     lookupParam("threads", ikparams.thread_count, 0);
 
     // initialize parameters for Problem
-    lookupParam("dpos", ikparams.dpos, 0.5 );
+    lookupParam("dpos", ikparams.dpos, DBL_MAX);
     lookupParam("drot", ikparams.drot, DBL_MAX);
     lookupParam("dtwist", ikparams.dtwist, 1e-5);
 
@@ -577,20 +577,20 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
         }
 
         // wrap at joint limits
-        if (v > hi)
-        {
-          std::cout<<"V BIG: "<<v<<std::endl;
-          ROS_WARN("SOLUTION BIGGER THAN HIGHEST");
-          v -= std::ceil(std::max(0.0, v - hi) / (2 * M_PI)) * (2 * M_PI);
-          std::cout<<"V HIGH: "<<v<<std::endl;
-        }
-        if (v < lo)
-        {
-          ROS_WARN("SOLUTION SMALLER THAN LOWEST");
-          std::cout<<"V LOWEST: "<<v<<std::endl;
-          v += std::ceil(std::max(0.0, lo - v) / (2 * M_PI)) * (2 * M_PI);
-          std::cout<<"V LOW: "<<v<<std::endl;
-        }
+        // if (v > hi)
+        // {
+        //   std::cout<<"V BIG: "<<v<<std::endl;
+        //   ROS_WARN("SOLUTION BIGGER THAN HIGHEST");
+        //   v -= std::ceil(std::max(0.0, v - hi) / (2 * M_PI)) * (2 * M_PI);
+        //   std::cout<<"V HIGH: "<<v<<std::endl;
+        // }
+        // if (v < lo)
+        // {
+        //   ROS_WARN("SOLUTION SMALLER THAN LOWEST");
+        //   std::cout<<"V LOWEST: "<<v<<std::endl;
+        //   v += std::ceil(std::max(0.0, lo - v) / (2 * M_PI)) * (2 * M_PI);
+        //   std::cout<<"V LOW: "<<v<<std::endl;
+        // }
 
         // clamp at edges
         if (v < lo)

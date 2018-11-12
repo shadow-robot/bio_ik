@@ -156,14 +156,12 @@ void Problem::initialize(moveit::core::RobotModelConstPtr robot_model, const mov
 
         if(auto* g = dynamic_cast<const PositionGoal*>(goal_info.goal))
         {
-            ROS_WARN("Got position goal");
             goal_info.goal_type = GoalType::Position;
             goal_info.frame.pos = g->getPosition();
         }
 
         if(auto* g = dynamic_cast<const OrientationGoal*>(goal_info.goal))
         {
-            ROS_WARN("Got orientation goal");
             goal_info.goal_type = GoalType::Orientation;
             goal_info.frame.rot = g->getOrientation();
         }

@@ -133,7 +133,6 @@ struct IKParallel
         solver_temps.resize(thread_count);
         solver_success.resize(thread_count);
         solver_fitness.resize(thread_count);
-
         // create parallel executor
         par.reset(new ParallelExecutor(thread_count, [this](size_t i) { solverthread(i); }));
     }
@@ -159,12 +158,12 @@ private:
         // run solver iterations until solution found or timeout
         for(size_t iteration = 0; (ros::WallTime::now().toSec() < timeout && finished == 0) || (iteration == 0 && i == 0); iteration++)
         {
-            ROS_WARN("IN SOLVING LOOP");
+            ROS_WARN("In iteration");
             if(finished)
             {
-                ROS_WARN("FINISHED SO STOPPING HERE");
                 break;
             }
+
             // run solver for a few steps
             solvers[i]->step();
             iteration_count++;
@@ -173,7 +172,6 @@ private:
 
             if(finished) 
             {
-                ROS_WARN("FINISHED SO STOOPPING HERE 2");
                 break;
             }
 
@@ -184,10 +182,17 @@ private:
             fk.applyConfiguration(result);
             bool success = solvers[i]->checkSolution(result, fk.getTipFrames());
             if(success) finished = 1;
-            solver_success[i] = success;
-            solver_solutions[i] = result;
-            solver_fitness[i] = solvers[i]->computeFitness(result, fk.getTipFrames());
-            std::cout<<"SOLVER FITNESS before checking with solve: "<<solver_fitness[i]<<std::endl;
+            double current_goal_fitness = solvers[i]->computeFitness(result, fk.getTipFrames());
+            std::cout<<"Iteration Number: "<<iteration_count<<std::endl;
+            std::cout<<"Current goal fitness: "<<current_goal_fitness<<std::endl;
+            std::cout<<"Previous goal fitness: "<<previous_goal_fitness_<<std::endl;
+            if (current_goal_fitness < previous_goal_fitness_)
+            {
+              solver_success[i] = success;
+              solver_solutions[i] = result;
+              solver_fitness[i] = current_goal_fitness;
+            }
+            previous_goal_fitness_ = current_goal_fitness;
             if(success) break;
         }
 
@@ -201,13 +206,14 @@ public:
     void solve()
     {
         BLOCKPROFILER("solve mt");
-
+        ROS_WARN("SOLVE");
         // prepare
         iteration_count = 0;
         result = problem.initial_guess;
         timeout = problem.timeout;
         success = false;
         finished = 0;
+        previous_goal_fitness_ = DBL_MAX;
         for(auto& s : solver_solutions)
             s = problem.initial_guess;
         for(auto& s : solver_temps)
@@ -216,7 +222,6 @@ public:
             s = 0;
         for(auto& f : solver_fitness){
             f = DBL_MAX;
-            std::cout<<"SOLVER FITNESS INITIALIZED: "<<f<<std::endl;
         }
         for(auto& s : solvers)
             s->canceled = false;
@@ -287,5 +292,7 @@ public:
     bool getSuccess() const { return success; }
 
     const std::vector<double>& getSolution() const { return result; }
+
+    double previous_goal_fitness_;
 };
 }
