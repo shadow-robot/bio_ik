@@ -92,6 +92,7 @@ struct IKParallel
     IKParams params;
     std::vector<std::unique_ptr<IKSolver>> solvers;
     std::vector<std::vector<double>> solver_solutions;
+    std::vector<double> previous_solver_fitness_;
     std::vector<std::vector<double>> solver_temps;
     std::vector<int> solver_success;
     std::vector<double> solver_fitness;
@@ -133,6 +134,8 @@ struct IKParallel
         solver_temps.resize(thread_count);
         solver_success.resize(thread_count);
         solver_fitness.resize(thread_count);
+        previous_solver_fitness_.resize(thread_count);
+
         // create parallel executor
         par.reset(new ParallelExecutor(thread_count, [this](size_t i) { solverthread(i); }));
     }
@@ -186,13 +189,13 @@ private:
             std::cout<<"Iteration Number: "<<iteration_count<<std::endl;
             std::cout<<"Current goal fitness: "<<current_goal_fitness<<std::endl;
             std::cout<<"Previous goal fitness: "<<previous_goal_fitness_<<std::endl;
-            if (current_goal_fitness < previous_goal_fitness_)
+            if (current_goal_fitness < previous_solver_fitness_[i])
             {
               solver_success[i] = success;
               solver_solutions[i] = result;
               solver_fitness[i] = current_goal_fitness;
             }
-            previous_goal_fitness_ = current_goal_fitness;
+            previous_solver_fitness_[i] = current_goal_fitness;
             if(success) break;
         }
 
@@ -213,7 +216,8 @@ public:
         timeout = problem.timeout;
         success = false;
         finished = 0;
-        previous_goal_fitness_ = DBL_MAX;
+        for(auto& p : previous_solver_fitness_)
+            p = DBL_MAX;
         for(auto& s : solver_solutions)
             s = problem.initial_guess;
         for(auto& s : solver_temps)
@@ -240,6 +244,7 @@ public:
         {
             if(solver_success[i])
             {
+                ROS_WARN("SUCCESS");
                 double fitness;
                 if(solvers[0]->problem.secondary_goals.empty())
                 {
