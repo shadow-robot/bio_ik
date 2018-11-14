@@ -248,8 +248,8 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     lookupParam("threads", ikparams.thread_count, 0);
 
     // initialize parameters for Problem
-    lookupParam("dpos", ikparams.dpos, DBL_MAX);
-    lookupParam("drot", ikparams.drot, DBL_MAX);
+    lookupParam("dpos", ikparams.dpos, 0.1);
+    lookupParam("drot", ikparams.drot, 20.0);
     lookupParam("dtwist", ikparams.dtwist, 1e-5);
 
     // initialize parameters for ik_evolution_1

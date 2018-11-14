@@ -110,7 +110,6 @@ template <int memetic> struct IKEvolution2 : IKBase
 
     void initialize(const Problem& problem)
     {
-        ROS_WARN("Using ik evolution 2");
         BLOCKPROFILER("initialization");
 
         IKBase::initialize(problem);
@@ -330,7 +329,6 @@ template <int memetic> struct IKEvolution2 : IKBase
     void step()
     {
         FNPROFILER();
-
         for(size_t ispecies = 0; ispecies < species.size(); ispecies++)
         {
             auto& species = this->species[ispecies];

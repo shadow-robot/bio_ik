@@ -276,14 +276,14 @@ bool Problem::checkSolutionActiveVariables(const std::vector<Frame>& tip_frames,
                 double p_dist = (fb.pos - fa.pos).length();
                 if(!(p_dist <= dpos)) return false;
             }
-            if(dtwist != DBL_MAX)
-            {
-                KDL::Frame fk_kdl, ik_kdl;
-                frameToKDL(fa, fk_kdl);
-                frameToKDL(fb, ik_kdl);
-                KDL::Twist kdl_diff(fk_kdl.M.Inverse() * KDL::diff(fk_kdl.p, ik_kdl.p), fk_kdl.M.Inverse() * KDL::diff(fk_kdl.M, ik_kdl.M));
-                if(!KDL::Equal(kdl_diff.vel, KDL::Twist::Zero().vel, dtwist)) return false;
-            }
+            // if(dtwist != DBL_MAX)
+            // {
+            //     KDL::Frame fk_kdl, ik_kdl;
+            //     frameToKDL(fa, fk_kdl);
+            //     frameToKDL(fb, ik_kdl);
+            //     KDL::Twist kdl_diff(fk_kdl.M.Inverse() * KDL::diff(fk_kdl.p, ik_kdl.p), fk_kdl.M.Inverse() * KDL::diff(fk_kdl.M, ik_kdl.M));
+            //     if(!KDL::Equal(kdl_diff.vel, KDL::Twist::Zero().vel, dtwist)) return false;
+            // }
             continue;
         }
 
@@ -295,14 +295,14 @@ bool Problem::checkSolutionActiveVariables(const std::vector<Frame>& tip_frames,
                 r_dist = r_dist * 180 / M_PI;
                 if(!(r_dist <= drot)) return false;
             }
-            if(dtwist != DBL_MAX)
-            {
-                KDL::Frame fk_kdl, ik_kdl;
-                frameToKDL(fa, fk_kdl);
-                frameToKDL(fb, ik_kdl);
-                KDL::Twist kdl_diff(fk_kdl.M.Inverse() * KDL::diff(fk_kdl.p, ik_kdl.p), fk_kdl.M.Inverse() * KDL::diff(fk_kdl.M, ik_kdl.M));
-                if(!KDL::Equal(kdl_diff.rot, KDL::Twist::Zero().rot, dtwist)) return false;
-            }
+            // if(dtwist != DBL_MAX)
+            // {
+            //     KDL::Frame fk_kdl, ik_kdl;
+            //     frameToKDL(fa, fk_kdl);
+            //     frameToKDL(fb, ik_kdl);
+            //     KDL::Twist kdl_diff(fk_kdl.M.Inverse() * KDL::diff(fk_kdl.p, ik_kdl.p), fk_kdl.M.Inverse() * KDL::diff(fk_kdl.M, ik_kdl.M));
+            //     if(!KDL::Equal(kdl_diff.rot, KDL::Twist::Zero().rot, dtwist)) return false;
+            // }
             continue;
         }
 
@@ -316,14 +316,14 @@ bool Problem::checkSolutionActiveVariables(const std::vector<Frame>& tip_frames,
                 if(!(p_dist <= dpos)) return false;
                 if(!(r_dist <= drot)) return false;
             }
-            if(dtwist != DBL_MAX)
-            {
-                KDL::Frame fk_kdl, ik_kdl;
-                frameToKDL(fa, fk_kdl);
-                frameToKDL(fb, ik_kdl);
-                KDL::Twist kdl_diff(fk_kdl.M.Inverse() * KDL::diff(fk_kdl.p, ik_kdl.p), fk_kdl.M.Inverse() * KDL::diff(fk_kdl.M, ik_kdl.M));
-                if(!KDL::Equal(kdl_diff, KDL::Twist::Zero(), dtwist)) return false;
-            }
+            // if(dtwist != DBL_MAX)
+            // {
+            //     KDL::Frame fk_kdl, ik_kdl;
+            //     frameToKDL(fa, fk_kdl);
+            //     frameToKDL(fb, ik_kdl);
+            //     KDL::Twist kdl_diff(fk_kdl.M.Inverse() * KDL::diff(fk_kdl.p, ik_kdl.p), fk_kdl.M.Inverse() * KDL::diff(fk_kdl.M, ik_kdl.M));
+            //     if(!KDL::Equal(kdl_diff, KDL::Twist::Zero(), dtwist)) return false;
+            // }
             continue;
         }
 
@@ -331,7 +331,7 @@ bool Problem::checkSolutionActiveVariables(const std::vector<Frame>& tip_frames,
         {
             double dmax = DBL_MAX;
             dmax = std::fmin(dmax, dpos);
-            dmax = std::fmin(dmax, dtwist);
+            // dmax = std::fmin(dmax, dtwist);
             double d = computeGoalFitness(goal, tip_frames.data(), active_variable_positions);
             if(!(d < dmax * dmax)){
                 return false;
