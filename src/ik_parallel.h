@@ -155,17 +155,17 @@ private:
         // initialize ik solvers
         {
             BLOCKPROFILER("ik solver init");
-            ROS_WARN_STREAM("Initialize solvers thread: " << i);
+            ROS_DEBUG_STREAM("Initialize solvers thread: " << i);
             solvers[i]->initialize(problem);
         }
 
         // run solver iterations until solution found or timeout
         for(size_t iteration = 0; (ros::WallTime::now().toSec() < timeout && finished == 0) || (iteration == 0 && i == 0); iteration++)
         {
-            ROS_WARN_STREAM("In Main loop for thread: " << i);
+            ROS_DEBUG_STREAM("In Main loop for thread: " << i);
             if(finished)
             {
-                ROS_WARN_STREAM("First Finish due to Timeout or Success thread: " << i);
+                ROS_DEBUG_STREAM("First Finish due to Timeout or Success thread: " << i);
                 break;
             }
 
@@ -177,7 +177,7 @@ private:
 
             if(finished) 
             {
-                ROS_WARN_STREAM("First Finish due to Timeout or Success thread: " << i);
+                ROS_DEBUG_STREAM("First Finish due to Timeout or Success thread: " << i);
                 break;
             }
 
@@ -189,13 +189,13 @@ private:
             bool success = solvers[i]->checkSolution(result, fk.getTipFrames());
             if(success) 
             {
-                ROS_WARN_STREAM("SUCCESS FOR THREAD: " << i);
+                ROS_DEBUG_STREAM("SUCCESS FOR THREAD: " << i);
                 finished = 1;
             }
             double current_goal_fitness = solvers[i]->computeFitness(result, fk.getTipFrames());
             if (current_goal_fitness)
             {
-                ROS_WARN_STREAM("Calculated fitness for thread: " << i);
+                ROS_DEBUG_STREAM("Calculated fitness for thread: " << i);
             }
             if (current_goal_fitness < previous_solver_fitness_[i])
             {
@@ -206,16 +206,16 @@ private:
             previous_solver_fitness_[i] = current_goal_fitness;
             if(success) 
             {
-                ROS_WARN_STREAM("Finished for success thread: " << i);
+                ROS_DEBUG_STREAM("Finished for success thread: " << i);
                 break;
             }
             else
             {
-                ROS_WARN_STREAM("Finished for timeout thread: " << i);
+                ROS_DEBUG_STREAM("Finished for timeout thread: " << i);
             }
         }
 
-        ROS_WARN_STREAM("Timeout reached for thread: " << i);
+        ROS_DEBUG_STREAM("Timeout reached for thread: " << i);
         finished = 1;
 
         for(auto& s : solvers)
@@ -226,7 +226,6 @@ public:
     void solve()
     {
         BLOCKPROFILER("solve mt");
-        ROS_WARN("SOLVE");
         // prepare
         iteration_count = 0;
         result = problem.initial_guess;
@@ -249,7 +248,6 @@ public:
 
         // run solvers
         {
-            ROS_WARN("LOOPING");
             BLOCKPROFILER("solve mt 2");
             par->run();
         }
@@ -262,7 +260,6 @@ public:
         {
             if(solver_success[i])
             {
-                ROS_WARN("We got SUCCESS, computing best fitness");
                 double fitness;
                 if(solvers[0]->problem.secondary_goals.empty())
                 {
@@ -290,7 +287,6 @@ public:
         {
             for(size_t i = 0; i < thread_count; i++)
             {
-                std::cout<<"SOLVER FITNESS IF NO SUCCESS for thread "<<i<<": "<<solver_fitness[i]<<std::endl;
                 if(solver_fitness[i] < best_fitness)
                 {
                     best_fitness = solver_fitness[i];
@@ -299,20 +295,16 @@ public:
             }
         }
         
-        std::cout<<"BEST FITNESS: "<<best_fitness<<std::endl;
         if (best_fitness == DBL_MAX)
         {
-            ROS_ERROR("******************************FITNESS IS DBL MAX");
-            ROS_ERROR("******************************FITNESS IS DBL MAX");
-            ROS_ERROR("******************************FITNESS IS DBL MAX");
-            ROS_ERROR("******************************FITNESS IS DBL MAX");
+            ROS_ERROR("Best Fitness is DBL_MAX, solvers timed out before computing a solution");
         }
         if(enable_counter)
         {
             LOG("iterations", iteration_count);
         }
         
-        ROS_WARN("RETURNING RESULT");
+        ROS_DEBUG("Returning best result");
         result = solver_solutions[best_index];
 
         success = solver_success[best_index];

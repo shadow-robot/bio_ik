@@ -254,7 +254,7 @@ double Problem::computeGoalFitness(std::vector<GoalInfo>& goals, const Frame* ti
     }
     if (sum == DBL_MAX)
     {
-        ROS_WARN("SOLUTION IS DBL_MAX");
+        ROS_DEBUG("SOLUTION IS DBL_MAX");
     }
     return sum;
 }

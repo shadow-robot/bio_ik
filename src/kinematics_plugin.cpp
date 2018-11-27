@@ -576,22 +576,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
           v += r;
         }
 
-        // wrap at joint limits
-        // if (v > hi)
-        // {
-        //   std::cout<<"V BIG: "<<v<<std::endl;
-        //   ROS_WARN("SOLUTION BIGGER THAN HIGHEST");
-        //   v -= std::ceil(std::max(0.0, v - hi) / (2 * M_PI)) * (2 * M_PI);
-        //   std::cout<<"V HIGH: "<<v<<std::endl;
-        // }
-        // if (v < lo)
-        // {
-        //   ROS_WARN("SOLUTION SMALLER THAN LOWEST");
-        //   std::cout<<"V LOWEST: "<<v<<std::endl;
-        //   v += std::ceil(std::max(0.0, lo - v) / (2 * M_PI)) * (2 * M_PI);
-        //   std::cout<<"V LOW: "<<v<<std::endl;
-        // }
-
         // clamp at edges
         if (v < lo)
           v = lo;
