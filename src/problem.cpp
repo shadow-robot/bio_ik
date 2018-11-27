@@ -211,8 +211,8 @@ void Problem::initialize(moveit::core::RobotModelConstPtr robot_model, const mov
         {
             for(size_t i = 0; i < active_variables.size(); i++)
             {
-                //auto ivar = active_variables[i];
-                //minimal_displacement_factors[i] = modelInfo.getMaxVelocityRcp(ivar) / s;
+                auto ivar = active_variables[i];
+                minimal_displacement_factors[i] = modelInfo.getMaxVelocityRcp(ivar) / s;
             }
         }
         else
@@ -222,7 +222,7 @@ void Problem::initialize(moveit::core::RobotModelConstPtr robot_model, const mov
         }
     }
 
-    //initialize2();
+    initialize2();
 }
 
 void Problem::initialize2()
