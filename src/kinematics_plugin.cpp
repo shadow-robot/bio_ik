@@ -233,7 +233,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     // for(auto& n : link_names) LOG("link", n);
 
     // bool enable_profiler;
-    lookupParam("profiler", enable_profiler, true);
+    lookupParam("profiler", enable_profiler, false);
     // if(enable_profiler) Profiler::start();
 
     robot_info = RobotInfo(robot_model);
