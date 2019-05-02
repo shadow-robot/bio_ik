@@ -442,10 +442,12 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     state.resize(robot_model->getVariableCount());
     robot_model->getVariableDefaultPositions(state);
     if (context_state)
+    {
       for (size_t i = 0; i < robot_model->getVariableCount(); i++)
       {
         state[i] = context_state->getVariablePositions()[i];
       }
+    }
 
     // overwrite used variables with seed state
     solution = ik_seed_state;
