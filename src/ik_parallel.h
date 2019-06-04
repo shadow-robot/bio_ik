@@ -199,9 +199,9 @@ private:
             }
             if (current_goal_fitness < previous_solver_fitness_[i])
             {
-              solver_success[i] = success;
-              solver_solutions[i] = result;
-              solver_fitness[i] = current_goal_fitness;
+                solver_success[i] = success;
+                solver_solutions[i] = result;
+                solver_fitness[i] = current_goal_fitness;
             }
             previous_solver_fitness_[i] = current_goal_fitness;
             if(success) 
