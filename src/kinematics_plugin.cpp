@@ -564,7 +564,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
           robot_model->getMimicJointModels().empty()) {
         auto r = problem.initial_guess[ivar];
         auto lo = robot_info.getMin(ivar);
-        //double lo = -0.5; // Just changed, the problem seems to be the limit = 0 and the joint sometimes goes below that
         auto hi = robot_info.getMax(ivar);
 
         // move close to initial guess
