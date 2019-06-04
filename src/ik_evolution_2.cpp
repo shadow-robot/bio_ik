@@ -129,6 +129,7 @@ template <int memetic> struct IKEvolution2 : IKBase
         initial_guess = problem.initial_guess;
         solution = initial_guess;
         solution_fitness = computeFitness(solution);
+        // should be 0
 
         // init temporary buffer with positions of inactive joints
         temp_joint_variables = initial_guess;
@@ -328,7 +329,6 @@ template <int memetic> struct IKEvolution2 : IKBase
     void step()
     {
         FNPROFILER();
-
         for(size_t ispecies = 0; ispecies < species.size(); ispecies++)
         {
             auto& species = this->species[ispecies];

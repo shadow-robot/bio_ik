@@ -92,6 +92,7 @@ struct IKParallel
     IKParams params;
     std::vector<std::unique_ptr<IKSolver>> solvers;
     std::vector<std::vector<double>> solver_solutions;
+    std::vector<double> previous_solver_fitness_;
     std::vector<std::vector<double>> solver_temps;
     std::vector<int> solver_success;
     std::vector<double> solver_fitness;
@@ -133,6 +134,7 @@ struct IKParallel
         solver_temps.resize(thread_count);
         solver_success.resize(thread_count);
         solver_fitness.resize(thread_count);
+        previous_solver_fitness_.resize(thread_count);
 
         // create parallel executor
         par.reset(new ParallelExecutor(thread_count, [this](size_t i) { solverthread(i); }));
@@ -153,13 +155,19 @@ private:
         // initialize ik solvers
         {
             BLOCKPROFILER("ik solver init");
+            ROS_DEBUG_STREAM("Initialize solvers thread: " << i);
             solvers[i]->initialize(problem);
         }
 
         // run solver iterations until solution found or timeout
         for(size_t iteration = 0; (ros::WallTime::now().toSec() < timeout && finished == 0) || (iteration == 0 && i == 0); iteration++)
         {
-            if(finished) break;
+            ROS_DEBUG_STREAM("In Main loop for thread: " << i);
+            if(finished)
+            {
+                ROS_DEBUG_STREAM("First Finish due to Timeout or Success thread: " << i);
+                break;
+            }
 
             // run solver for a few steps
             solvers[i]->step();
@@ -167,7 +175,11 @@ private:
             for(int it2 = 1; it2 < 4; it2++)
                 if(ros::WallTime::now().toSec() < timeout && finished == 0) solvers[i]->step();
 
-            if(finished) break;
+            if(finished) 
+            {
+                ROS_DEBUG_STREAM("First Finish due to Timeout or Success thread: " << i);
+                break;
+            }
 
             // get solution and check stop criterion
             auto& result = solver_temps[i];
@@ -175,14 +187,35 @@ private:
             auto& fk = solvers[i]->model;
             fk.applyConfiguration(result);
             bool success = solvers[i]->checkSolution(result, fk.getTipFrames());
-            if(success) finished = 1;
-            solver_success[i] = success;
-            solver_solutions[i] = result;
-            solver_fitness[i] = solvers[i]->computeFitness(result, fk.getTipFrames());
-
-            if(success) break;
+            if(success) 
+            {
+                ROS_DEBUG_STREAM("SUCCESS FOR THREAD: " << i);
+                finished = 1;
+            }
+            double current_goal_fitness = solvers[i]->computeFitness(result, fk.getTipFrames());
+            if (current_goal_fitness)
+            {
+                ROS_DEBUG_STREAM("Calculated fitness for thread: " << i);
+            }
+            if (current_goal_fitness < previous_solver_fitness_[i])
+            {
+                solver_success[i] = success;
+                solver_solutions[i] = result;
+                solver_fitness[i] = current_goal_fitness;
+            }
+            previous_solver_fitness_[i] = current_goal_fitness;
+            if(success) 
+            {
+                ROS_DEBUG_STREAM("Finished for success thread: " << i);
+                break;
+            }
+            else
+            {
+                ROS_DEBUG_STREAM("Finished for timeout thread: " << i);
+            }
         }
 
+        ROS_DEBUG_STREAM("Timeout reached for thread: " << i);
         finished = 1;
 
         for(auto& s : solvers)
@@ -193,21 +226,23 @@ public:
     void solve()
     {
         BLOCKPROFILER("solve mt");
-
         // prepare
         iteration_count = 0;
         result = problem.initial_guess;
         timeout = problem.timeout;
         success = false;
         finished = 0;
+        for(auto& p : previous_solver_fitness_)
+            p = DBL_MAX;
         for(auto& s : solver_solutions)
             s = problem.initial_guess;
         for(auto& s : solver_temps)
             s = problem.initial_guess;
         for(auto& s : solver_success)
             s = 0;
-        for(auto& f : solver_fitness)
+        for(auto& f : solver_fitness){
             f = DBL_MAX;
+        }
         for(auto& s : solvers)
             s->canceled = false;
 
@@ -259,13 +294,19 @@ public:
                 }
             }
         }
-
+        
+        if (best_fitness == DBL_MAX)
+        {
+            ROS_ERROR("Best Fitness is DBL_MAX, solvers timed out before computing a solution");
+        }
         if(enable_counter)
         {
             LOG("iterations", iteration_count);
         }
-
+        
+        ROS_DEBUG("Returning best result");
         result = solver_solutions[best_index];
+
         success = solver_success[best_index];
     }
 
@@ -274,5 +315,7 @@ public:
     bool getSuccess() const { return success; }
 
     const std::vector<double>& getSolution() const { return result; }
+
+    double previous_goal_fitness_;
 };
 }
