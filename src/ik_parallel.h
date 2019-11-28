@@ -297,7 +297,7 @@ public:
         
         if (best_fitness == DBL_MAX)
         {
-            ROS_ERROR("Best Fitness is DBL_MAX, solvers timed out before computing a solution");
+            ROS_DEBUG("Best Fitness is DBL_MAX, solvers timed out before computing a solution");
         }
         if(enable_counter)
         {
