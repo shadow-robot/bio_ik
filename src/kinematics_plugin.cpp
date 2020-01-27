@@ -194,7 +194,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
     // LOG_VAR(robot_description);
     // LOG_VAR(group_name);
-
     LOG("bio ik init", ros::this_node::getName());
 
     /*rdf_loader::RDFLoader rdf_loader(robot_description_);
@@ -255,8 +254,8 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     lookupParam("threads", ikparams.thread_count, 0);
 
     // initialize parameters for Problem
-    lookupParam("dpos", ikparams.dpos, DBL_MAX);
-    lookupParam("drot", ikparams.drot, DBL_MAX);
+    lookupParam("dpos", ikparams.dpos, 0.1);
+    lookupParam("drot", ikparams.drot, 20.0);
     lookupParam("dtwist", ikparams.dtwist, 1e-5);
 
     // initialize parameters for ik_evolution_1
@@ -266,7 +265,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     lookupParam("linear_fitness", ikparams.linear_fitness, false);
 
     temp_state.reset(new moveit::core::RobotState(robot_model));
-
     ik.reset(new IKParallel(ikparams));
 
     {
@@ -460,14 +458,19 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
     // LOG(typeid(options).name());
     // LOG(((OptMod*)&options)->test);
-
     // get variable default positions / context state
     state.resize(robot_model->getVariableCount());
     if (context_state)
+    {
       for (size_t i = 0; i < robot_model->getVariableCount(); i++)
+      {
         state[i] = context_state->getVariablePositions()[i];
+      }
+    }
     else
+    {
       robot_model->getVariableDefaultPositions(state);
+    }
 
     // overwrite used variables with seed state
     solution = ik_seed_state;
@@ -478,8 +481,10 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
         if (!joint_model)
           continue;
         for (size_t vi = 0; vi < joint_model->getVariableCount(); vi++)
+        {
           state.at(joint_model->getFirstVariableIndex() + vi) =
               solution.at(i++);
+        }
       }
     }
 
@@ -501,7 +506,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     }
 
     // init ik
-
     problem.timeout = t0 + timeout;
     problem.initial_guess = state;
 
@@ -595,12 +599,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
           v *= (2 * M_PI);
           v += r;
         }
-
-        // wrap at joint limits
-        if (v > hi)
-          v -= std::ceil(std::max(0.0, v - hi) / (2 * M_PI)) * (2 * M_PI);
-        if (v < lo)
-          v += std::ceil(std::max(0.0, lo - v) / (2 * M_PI)) * (2 * M_PI);
 
         // clamp at edges
         if (v < lo)

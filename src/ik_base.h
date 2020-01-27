@@ -133,6 +133,8 @@ struct IKBase : Random
     int thread_index;
     Problem problem;
     std::vector<Frame> null_tip_frames;
+    std::vector<std::vector<int>> underactuated_joint_pairs;
+    std::vector<std::vector<moveit::core::VariableBounds>> underactuated_joint_pair_bounds;
     volatile int canceled;
 
     virtual void step() = 0;
@@ -157,6 +159,27 @@ struct IKBase : Random
         model.initialize(problem.tip_link_indices);
         // active_variables = problem.active_variables;
         null_tip_frames.resize(problem.tip_link_indices.size());
+        const std::vector<std::string>& joint_names = params.robot_model->getVariableNames();
+        underactuated_joint_pairs.clear();
+        underactuated_joint_pair_bounds.clear();
+        for (int i = 0; i < joint_names.size(); i++)
+        {
+            if (joint_names[i].find("FJ2") != std::string::npos) {
+                std::string j1_name = std::string(joint_names[i]);
+                j1_name.replace(j1_name.find("FJ2"), 3, "FJ1");
+                for (int j = 0; j < joint_names.size(); j++)
+                {
+                    if (joint_names[j].find(j1_name) != std::string::npos) {
+                        underactuated_joint_pairs.push_back(std::vector<int>{i, j});
+                        underactuated_joint_pair_bounds.push_back(std::vector<moveit::core::VariableBounds>{
+                            params.robot_model->getVariableBounds(joint_names[i]),
+                            params.robot_model->getVariableBounds(joint_names[j])
+                        });
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     double computeSecondaryFitnessActiveVariables(const double* active_variable_positions) { return problem.computeGoalFitness(problem.secondary_goals, null_tip_frames.data(), active_variable_positions); }
@@ -201,8 +224,18 @@ struct IKBase : Random
 
     double computeFitness(const std::vector<double>& variable_positions)
     {
-        model.applyConfiguration(variable_positions);
-        return computeFitness(variable_positions, model.getTipFrames());
+        std::vector<double> realised_variable_positions(variable_positions);
+        for (int i=0; i<underactuated_joint_pairs.size(); i++)
+        {
+            int j1_index = underactuated_joint_pairs[i][1];
+            int j2_index = underactuated_joint_pairs[i][0];
+            double sum = variable_positions[j1_index] + variable_positions[j2_index];
+            realised_variable_positions[j2_index] = std::min(sum, underactuated_joint_pair_bounds[i][0].max_position_);
+            realised_variable_positions[j1_index] = std::max(sum - realised_variable_positions[j2_index], 
+                underactuated_joint_pair_bounds[i][1].min_position_);
+        }
+        model.applyConfiguration(realised_variable_positions);
+        return computeFitness(realised_variable_positions, model.getTipFrames());
     }
 
     virtual size_t concurrency() const { return 1; }
